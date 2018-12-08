@@ -10,7 +10,7 @@ const drawRow = (row, props) => {
       {row.map(box => (
         <Box
           key={box.key}
-          value={box.open ? box.val : '?'}
+          value={box.open ? box.val : '-'}
           boxPressed={props.boxPressed}
           box={box}
           className="Box"

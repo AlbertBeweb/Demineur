@@ -5,64 +5,59 @@ import { Button } from '@blueprintjs/core'
 import Playground from './Playground'
 
 const RandInt = max => Math.floor(Math.random() * max)
-const get = (x, y, playground) => playground[x] && playground[x][y]
-const isDefined = v => v !== undefined
-const getNeighbours = (x, y, playground) =>
+
+const get = (width, height, x, y) =>
+    y >= 0 && y < height && x >= 0 && x < width && [x, y]
+
+const getNeighboursCoords = (width, height, x, y) =>
     [
-        get(y - 1, x - 1, playground),
-        get(y - 1, x, playground),
-        get(y - 1, x + 1, playground),
-        get(y, x - 1, playground),
-        get(y, x, playground),
-        get(y, x + 1, playground),
-        get(y + 1, x - 1, playground),
-        get(y + 1, x, playground),
-        get(y + 1, x + 1, playground),
-    ].filter(isDefined)
+        get(width, height, x - 1, y - 1),
+        get(width, height, x, y - 1),
+        get(width, height, x + 1, y - 1),
+        get(width, height, x - 1, y),
+        get(width, height, x, y),
+        get(width, height, x + 1, y),
+        get(width, height, x - 1, y + 1),
+        get(width, height, x, y + 1),
+        get(width, height, x + 1, y + 1),
+    ].filter(Array.isArray)
+
+const getNeighbours = (x, y, playground) => {
+    const height = playground.length
+    const width = playground[0].length
+    return getNeighboursCoords(width, height, x, y).map(
+        ([x, y]) => playground[y][x],
+    )
+}
+
+const nArr = n => [...Array(n).keys()] // create an Array of n elements
+// ex: nArr(3) -> [0, 1, 2]
 
 // Nice to have: use int value to specify box status (ex: 0: hidden, 1: displayed, 2: flagged, 3: unknown)
-const createPlayground = (width, height, bombs = 1) => {
-    // Create playground.
-    let playground = []
-    for (let i = 0; i < height; i++) {
-        playground[i] = []
-        for (let j = 0; j < width; j++) {
-            playground[i][j] = {
-                x: j,
-                y: i,
-                key: i * width + j,
-                val: 0,
-                open: false,
-                flag: '',
-            }
-        }
-    }
+const createPlayground = (width, height, nbBombs = 1) => {
     // Place bombs.
-    let nbBombs = Math.max(1, Math.min(bombs, width * height - 1))
-    let x = 0
-    let y = 0
+    nbBombs = Math.max(1, Math.min(nbBombs, width * height - 1))
+    const bombs = {}
     while (nbBombs > 0) {
-        x = RandInt(width)
-        y = RandInt(height)
-        if (playground[y][x].val === 0) {
-            playground[y][x].val = -1
-            nbBombs--
-        }
+        const key = RandInt(height) * width + RandInt(width)
+        if (bombs[key]) continue
+        nbBombs += bombs[key] = -1 // dont do that in real life
     }
-    // Set box value based on bombs proximity
-    playground.map(row =>
-        row.map(box => {
-            if (box.val === 0) {
-                const neighbours = getNeighbours(box.x, box.y, playground)
-                neighbours.map(neighbour => {
-                    if (neighbour.val === -1) {
-                        box.val++
-                    }
-                })
-            }
-        }),
+
+    return nArr(height).map(y =>
+        nArr(width).map(x => ({
+            x,
+            y,
+            key: y * width + x,
+            open: false,
+            val:
+                bombs[y * width + x] ||
+                getNeighboursCoords(width, height, x, y)
+                    .map(([x, y]) => -bombs[y * width + x] || 0)
+                    .reduce((total, val) => total + val),
+            flag: '',
+        })),
     )
-    return playground
 }
 
 class App extends React.Component {
@@ -154,7 +149,7 @@ const checkBox = (x, y, playground) => {
     new_playground[y][x].open = true
     const box = new_playground[y][x]
     if (box.val === -1) {
-        alert('PERDU')
+        console.log('PERDU')
     }
     if (box.val === 0) {
         const neighbours = getNeighbours(x, y, new_playground)
