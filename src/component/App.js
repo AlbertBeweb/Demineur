@@ -34,7 +34,7 @@ const nArr = n => [...Array(n).keys()] // create an Array of n elements
 // ex: nArr(3) -> [0, 1, 2]
 
 // Nice to have: use int value to specify box status (ex: 0: hidden, 1: displayed, 2: flagged, 3: unknown)
-const createPlayground = (width, height, nbBombs = 1) => {
+const createPlayground = ({ width, height, nbBombs = 1 }) => {
     // Place bombs.
     nbBombs = Math.max(1, Math.min(nbBombs, width * height - 1))
     const bombs = {}
@@ -70,78 +70,59 @@ class App extends React.Component {
         return (
             <div>
                 <div>
-                    <Button
-                        intent="success"
-                        text="Check case"
-                        onClick={() =>
-                            this.props.changeModeActionCreator('ONE')
-                        }
-                    />
-                    <Button
-                        intent="success"
-                        text="Mark bomb"
-                        onClick={() =>
-                            this.props.changeModeActionCreator('BOMB')
-                        }
-                    />
-                    <Button
-                        intent="success"
-                        text="Mark suspicious"
-                        onClick={() =>
-                            this.props.changeModeActionCreator('SUSPICIOUS')
-                        }
-                    />
-                    <Button
-                        intent="success"
-                        text="Check case"
-                        onClick={() =>
-                            this.props.changeModeActionCreator('ALL')
-                        }
-                    />
+                    {[
+                        { text: 'Check case', mode: 'ONE' },
+                        { text: 'Mark  Bomb', mode: 'BOMB' },
+                        { text: 'Mark Suspicious', mode: 'SUSPICIOUS' },
+                        { text: 'Check case', mode: 'ALL' },
+                    ].map(({ text, mode }) => (
+                        <Button
+                            intent="success"
+                            text={text}
+                            onClick={() =>
+                                this.props.changeModeActionCreator(mode)
+                            }
+                        />
+                    ))}
                     <Button
                         intent="success"
                         text="New playground"
                         onClick={() =>
                             this.props.changePlayground(
-                                createPlayground(10, 5, 15),
+                                createPlayground({
+                                    width: 10,
+                                    height: 5,
+                                    nbBombs: 15,
+                                }),
                             )
                         }
                     />
                 </div>
-                <div>
-                    <Playground
-                        playground={this.props.playground}
-                        boxPressed={(x, y) =>
-                            this.props.boxPressed(
-                                x,
-                                y,
-                                this.props.playground,
-                                this.props.mode,
-                            )
-                        }
-                    />
-                </div>
+                <Playground
+                    playground={this.props.playground}
+                    boxPressed={(x, y) =>
+                        this.props.boxPressed(
+                            x,
+                            y,
+                            this.props.playground,
+                            this.props.mode,
+                        )
+                    }
+                />
             </div>
         )
     }
 }
 
-const changePlaygroundActionCreator = playground => {
-    return {
-        type: 'CHANGE_PLAYGROUND',
-        payload: playground,
-    }
-}
+const changePlaygroundActionCreator = playground => ({
+    type: 'CHANGE_PLAYGROUND',
+    payload: playground,
+})
 
-const changeModeActionCreator = mode => {
-    return {
-        type: 'CHANGE_MODE',
-        payload: mode,
-    }
-}
+const changeModeActionCreator = mode => ({ type: 'CHANGE_MODE', payload: mode })
 
 // DOTO: real game over
-const checkBox = (x, y, playground) => {
+const checkBox = (playground, { x, y }) => {
     if (playground[y][x].open) {
         return playground
     }
@@ -153,7 +134,7 @@ const checkBox = (x, y, playground) => {
     const { val } = newPlayground[y][x]
     if (val === 0) {
         return getNeighbours(x, y, newPlayground).reduce(
-            (acc, { x, y }) => checkBox(x, y, acc),
+            checkBox,
             newPlayground,
         )
     }
@@ -163,28 +144,15 @@ const checkBox = (x, y, playground) => {
     return newPlayground
 }
 
-const checkNeighbours = (x, y, playground) => {
-    if (!playground[y][x].open) {
-        return playground
-    }
-    let new_playground = [...playground]
-    const box = new_playground[y][x]
-    const neighbours = getNeighbours(x, y, new_playground)
-    neighbours.map(
-        neighbour =>
-            (new_playground = checkBox(
-                neighbour.x,
-                neighbour.y,
-                new_playground,
-            )),
-    )
-    return new_playground
-}
+const checkNeighbours = (x, y, playground) =>
+    playground[y][x].open
+        ? getNeighbours(x, y, playground).reduce(checkBox, playground)
+        : playground
 
 const boxPressed = (x, y, playground, mode) => {
     switch (mode) {
         case 'ONE':
-            return checkBox(x, y, playground)
+            return checkBox(playground, { x, y })
         case 'ALL':
             return checkNeighbours(x, y, playground)
         default:
@@ -192,31 +160,22 @@ const boxPressed = (x, y, playground, mode) => {
     }
 }
 
-const stateToProps = state => {
-    return {
-        playground: state.playground,
-        mode: state.mode,
-    }
-}
+const stateToProps = ({ playground, mode }) => ({ playground, mode })
 
-const dispatchToProps = dispatch => {
-    return {
-        changePlayground: playground => {
-            dispatch(changePlaygroundActionCreator(playground))
-            dispatch(changeModeActionCreator('ONE'))
-        },
-        changeModeActionCreator: mode => {
-            dispatch(changeModeActionCreator(mode))
-        },
-        boxPressed: (x, y, playground, mode) => {
-            dispatch(
-                changePlaygroundActionCreator(
-                    boxPressed(x, y, playground, mode),
-                ),
-            )
-        },
-    }
-}
+const dispatchToProps = dispatch => ({
+    changePlayground: playground => {
+        dispatch(changePlaygroundActionCreator(playground))
+        dispatch(changeModeActionCreator('ONE'))
+    },
+    changeModeActionCreator: mode => {
+        dispatch(changeModeActionCreator(mode))
+    },
+    boxPressed: (x, y, playground, mode) => {
+        dispatch(
+            changePlaygroundActionCreator(boxPressed(x, y, playground, mode)),
+        )
+    },
+})
 
 export default connect(
     stateToProps,

@@ -4,21 +4,19 @@ import Box from './Box'
 
 import '../style.css'
 
-const drawRow = (row, props) => {
-  return (
-    <div key={row[0].y}>
-      {row.map(box => (
-        <Box
-          key={box.key}
-          value={box.open ? box.val : '-'}
-          boxPressed={props.boxPressed}
-          box={box}
-          className="Box"
-        />
-      ))}
-    </div>
-  )
-}
+const drawRow = (row, props) => (
+  <div key={row[0].y}>
+    {row.map(box => (
+      <Box
+        key={box.key}
+        value={box.open ? box.val : '-'}
+        boxPressed={props.boxPressed}
+        box={box}
+        className="Box"
+      />
+    ))}
+  </div>
+)
 
 const Playground = props => {
   if (props.playground.length === 0) {
