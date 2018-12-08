@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom'
 import { createStore, combineReducers } from 'redux'
 import { Provider } from 'react-redux'
 
+import 'normalize.css/normalize.css'
+import '@blueprintjs/icons/lib/css/blueprint-icons.css'
+import '@blueprintjs/core/lib/css/blueprint.css'
+
 import App from './component/App'
 
 const playgroundReducer = (state = [], action) => {

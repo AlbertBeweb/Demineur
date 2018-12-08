@@ -5,40 +5,20 @@ import { Button } from '@blueprintjs/core'
 import Playground from './Playground'
 
 const RandInt = max => Math.floor(Math.random() * max)
-const getNeighbours = (x, y, playground) => {
-    const h = playground.length
-    const w = playground[0].length
-    if (y > h || y < 0 || x < 0 || x > w) {
-        return []
-    }
-    let neighbours = []
-    if (y > 0) {
-        if (x > 0) {
-            neighbours.push(playground[y - 1][x - 1])
-        }
-        neighbours.push(playground[y - 1][x])
-        if (x < w - 1) {
-            neighbours.push(playground[y - 1][x + 1])
-        }
-    }
-    if (x > 0) {
-        neighbours.push(playground[y][x - 1])
-    }
-    neighbours.push(playground[y][x])
-    if (x < w - 1) {
-        neighbours.push(playground[y][x + 1])
-    }
-    if (y < h - 1) {
-        if (x > 0) {
-            neighbours.push(playground[y + 1][x - 1])
-        }
-        neighbours.push(playground[y + 1][x])
-        if (x < w - 1) {
-            neighbours.push(playground[y + 1][x + 1])
-        }
-    }
-    return neighbours
-}
+const get = (x, y, playground) => playground[x] && playground[x][y]
+const isDefined = v => v !== undefined
+const getNeighbours = (x, y, playground) =>
+    [
+        get(y - 1, x - 1, playground),
+        get(y - 1, x, playground),
+        get(y - 1, x + 1, playground),
+        get(y, x - 1, playground),
+        get(y, x, playground),
+        get(y, x + 1, playground),
+        get(y + 1, x - 1, playground),
+        get(y + 1, x, playground),
+        get(y + 1, x + 1, playground),
+    ].filter(isDefined)
 
 // Nice to have: use int value to specify box status (ex: 0: hidden, 1: displayed, 2: flagged, 3: unknown)
 const createPlayground = (width, height, bombs = 1) => {
