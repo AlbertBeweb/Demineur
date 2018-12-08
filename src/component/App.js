@@ -145,24 +145,22 @@ const checkBox = (x, y, playground) => {
     if (playground[y][x].open) {
         return playground
     }
-    let new_playground = [...playground]
-    new_playground[y][x].open = true
-    const box = new_playground[y][x]
-    if (box.val === -1) {
-        console.log('PERDU')
-    }
-    if (box.val === 0) {
-        const neighbours = getNeighbours(x, y, new_playground)
-        neighbours.map(
-            neighbour =>
-                (new_playground = checkBox(
-                    neighbour.x,
-                    neighbour.y,
-                    new_playground,
-                )),
+    const newPlayground = playground.map(row =>
+        row.map(box =>
+            box.x === x && box.y === y ? { ...box, open: true } : box,
+        ),
+    )
+    const { val } = newPlayground[y][x]
+    if (val === 0) {
+        return getNeighbours(x, y, newPlayground).reduce(
+            (acc, { x, y }) => checkBox(x, y, acc),
+            newPlayground,
         )
     }
-    return new_playground
+    if (val === -1) {
+        console.log('PERDU')
+    }
+    return newPlayground
 }
 
 const checkNeighbours = (x, y, playground) => {
